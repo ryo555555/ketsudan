@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>今日の決断</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #f7f7f5;
+    --white: #ffffff;
+    --text: #1a1a1a;
+    --sub: #9a9a9a;
+    --border: #e8e8e4;
+    --accent: #1a1a1a;
+    --accent-light: #f0f0ee;
+    --radius: 16px;
+  }
+
+  body {
+    background: #ddddd8;
+    font-family: 'Noto Sans JP', sans-serif;
+    display: flex; justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh; padding: 32px 16px;
+  }
+
+  .phone {
+    width: 100%; max-width: 390px;
+    background: var(--bg); border-radius: 44px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.09), 0 28px 80px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.7);
+    overflow: hidden; min-height: 844px;
+    display: flex; flex-direction: column; position: relative;
+  }
+
+  .status-bar { display:flex; justify-content:space-between; align-items:center; padding:14px 28px 0; }
+  .status-time { font-size:15px; font-weight:600; color:var(--text); }
+  .battery { width:22px; height:11px; border:1.5px solid rgba(0,0,0,0.4); border-radius:2px; position:relative; }
+  .battery::after { content:''; position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:2px; height:5px; background:rgba(0,0,0,0.4); border-radius:0 1px 1px 0; }
+  .battery-fill { width:75%; height:100%; background:rgba(0,0,0,0.4); border-radius:1px; }
+  .dynamic-island { width:120px; height:34px; background:#000; border-radius:20px; margin:10px auto 0; flex-shrink:0; }
+
+  .screen { flex:1; overflow-y:auto; padding:32px 24px 100px; -webkit-overflow-scrolling:touch; }
+  .screen::-webkit-scrollbar { display:none; }
+
+  .app-header { margin-bottom:32px; }
+  .greeting { font-size:13px; color:var(--sub); margin-bottom:4px; }
+  .app-title { font-size:30px; font-weight:700; letter-spacing:-.5px; }
+
+  .mood-strip { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:28px; scrollbar-width:none; }
+  .mood-strip::-webkit-scrollbar { display:none; }
+  .mood-chip { display:flex; align-items:center; gap:5px; padding:7px 14px; border-radius:100px; border:1.5px solid var(--border); background:var(--white); font-size:12px; font-weight:500; color:var(--sub); cursor:pointer; white-space:nowrap; transition:all .15s; flex-shrink:0; user-select:none; }
+  .mood-chip.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .section-label { font-size:11px; font-weight:500; color:var(--sub); letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px; }
+
+  /* カテゴリグリッド */
+  .cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
+
+  .cat-btn {
+    background:var(--white); border:1.5px solid var(--border);
+    border-radius:var(--radius); padding:20px 16px 16px;
+    cursor:pointer; text-align:left;
+    transition:all .15s; position:relative; overflow:hidden;
+    user-select:none;
+  }
+  .cat-btn:active { transform:scale(0.97); background:var(--accent-light); }
+
+  .cat-btn-icon { font-size:26px; display:block; margin-bottom:10px; line-height:1; }
+  .cat-btn-name { font-size:14px; font-weight:700; color:var(--text); display:block; margin-bottom:3px; }
+  .cat-btn-hint { font-size:11px; color:var(--sub); display:block; line-height:1.4; }
+
+  .ripple { position:absolute; width:60px; height:60px; border-radius:50%; background:rgba(0,0,0,0.05); top:50%; left:50%; transform:translate(-50%,-50%) scale(0); animation:ripple-out .4s ease-out forwards; pointer-events:none; }
+  @keyframes ripple-out { to { transform:translate(-50%,-50%) scale(4); opacity:0; } }
+
+  /* 履歴 */
+  .history-empty { text-align:center; color:var(--sub); font-size:13px; padding:20px 0; }
+  .history-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .history-item { display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .history-item:last-child { border-bottom:none; }
+  .h-icon { width:36px; height:36px; background:var(--accent-light); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+  .h-info { flex:1; min-width:0; }
+  .h-ans { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .h-meta { font-size:11px; color:var(--sub); margin-top:2px; }
+  .h-check { font-size:13px; color:#c0c0c0; }
+
+  /* ══ OVERLAY ══ */
+  .overlay {
+    position:absolute; inset:0; background:var(--white);
+    display:flex; flex-direction:column; border-radius:44px;
+    transform:translateY(100%);
+    transition:transform .38s cubic-bezier(0.32,0.72,0,1);
+    z-index:20;
+  }
+  .overlay.show { transform:translateY(0); }
+
+  /* ローディング */
+  .ov-loading { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; }
+  .ov-loading.hidden { display:none; }
+  .load-icon { font-size:52px; animation:float 1.8s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .load-text { font-size:13px; color:var(--sub); }
+  .load-dots { display:flex; gap:5px; }
+  .load-dots span { width:5px; height:5px; border-radius:50%; background:var(--sub); animation:dotB 1s infinite; }
+  .load-dots span:nth-child(2){animation-delay:.15s} .load-dots span:nth-child(3){animation-delay:.3s}
+  @keyframes dotB { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
+
+  /* 3択画面 */
+  .ov-choices { display:none; flex-direction:column; padding:48px 24px 40px; flex:1; }
+  .ov-choices.show { display:flex; }
+
+  .ov-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .ov-cat-label { font-size:11px; font-weight:500; color:var(--sub); letter-spacing:.1em; text-transform:uppercase; }
+  .ov-close { background:var(--accent-light); border:none; width:32px; height:32px; border-radius:50%; font-size:15px; cursor:pointer; color:var(--sub); display:flex; align-items:center; justify-content:center; }
+
+  .ov-question { font-size:22px; font-weight:700; letter-spacing:-.3px; margin-bottom:28px; line-height:1.35; white-space:pre-line; }
+
+  .choices-list { display:flex; flex-direction:column; gap:12px; flex:1; }
+
+  .choice-card {
+    background:var(--bg); border:1.5px solid var(--border);
+    border-radius:var(--radius); padding:18px 20px;
+    cursor:pointer; display:flex; align-items:center; gap:16px;
+    transition:all .15s; animation:slideUp .3s ease both;
+    user-select:none;
+  }
+  .choice-card:nth-child(1){animation-delay:.05s}
+  .choice-card:nth-child(2){animation-delay:.12s}
+  .choice-card:nth-child(3){animation-delay:.19s}
+  @keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .choice-card:hover { border-color:var(--accent); background:var(--white); }
+  .choice-card:active { transform:scale(0.98); border-color:var(--accent); }
+
+  .choice-num { width:32px; height:32px; border-radius:50%; background:var(--white); border:1.5px solid var(--border); font-size:13px; font-weight:700; color:var(--sub); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .choice-info { flex:1; }
+  .choice-name { font-size:17px; font-weight:700; margin-bottom:3px; }
+  .choice-desc { font-size:12px; color:var(--sub); line-height:1.4; }
+  .choice-arrow { font-size:16px; color:var(--sub); }
+
+  .choices-refresh { margin-top:20px; text-align:center; background:none; border:none; font-family:'Noto Sans JP',sans-serif; font-size:13px; color:var(--sub); cursor:pointer; padding:8px; transition:color .15s; }
+  .choices-refresh:hover { color:var(--text); }
+
+  /* 結果画面 */
+  .ov-recipe { display:none; flex-direction:column; padding:48px 24px 32px; flex:1; overflow-y:auto; }
+  .ov-recipe.show { display:flex; }
+  .ov-recipe::-webkit-scrollbar { display:none; }
+  .recipe-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+  .recipe-back { background:var(--accent-light); border:none; width:32px; height:32px; border-radius:50%; font-size:15px; cursor:pointer; color:var(--sub); display:flex; align-items:center; justify-content:center; }
+  .recipe-title { font-size:24px; font-weight:700; letter-spacing:-.3px; margin-bottom:6px; }
+  .recipe-sub { font-size:12px; color:var(--sub); margin-bottom:16px; }
+  .recipe-section-title { font-size:11px; font-weight:600; color:var(--sub); letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px; margin-top:20px; }
+  .recipe-meta { display:flex; gap:10px; margin-bottom:4px; }
+  .recipe-meta-item { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center; }
+  .recipe-meta-item .meta-val { font-size:15px; font-weight:700; display:block; margin-bottom:2px; }
+  .recipe-meta-item .meta-label { font-size:10px; color:var(--sub); }
+  .ingredient-list { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .ingredient-row { display:flex; justify-content:space-between; align-items:center; padding:11px 16px; border-bottom:1px solid var(--border); font-size:14px; }
+  .ingredient-row:last-child { border-bottom:none; }
+  .ingredient-name { font-weight:500; }
+  .ingredient-amount { color:var(--sub); font-size:13px; }
+  .step-list { display:flex; flex-direction:column; gap:12px; }
+  .step-item { display:flex; gap:14px; align-items:flex-start; }
+  .step-num { width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+  .step-text { font-size:14px; line-height:1.75; color:var(--text); }
+  .recipe-accept-btn { width:100%; background:var(--accent); color:#fff; border:none; border-radius:100px; padding:17px; font-family:'Noto Sans JP',sans-serif; font-size:15px; font-weight:600; cursor:pointer; margin-top:24px; flex-shrink:0; transition:opacity .15s; }
+  .recipe-accept-btn:active { opacity:.8; }
+
+  .ov-result { display:none; flex-direction:column; padding:56px 32px 44px; flex:1; }
+  .ov-result.show { display:flex; }
+
+  .result-top { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+  .res-icon { font-size:56px; margin-bottom:24px; animation:popIn .4s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+  .res-small { font-size:11px; color:var(--sub); letter-spacing:.1em; margin-bottom:10px; }
+  .res-answer { font-size:34px; font-weight:700; letter-spacing:-.5px; text-align:center; line-height:1.2; margin-bottom:28px; animation:slideUp .35s ease both .1s; }
+  .res-divider { width:28px; height:1px; background:var(--border); margin:0 auto 22px; }
+  .res-reason { font-size:14px; color:#666; line-height:1.9; text-align:center; font-weight:300; animation:slideUp .35s ease both .18s; }
+
+  .res-actions { display:flex; flex-direction:column; gap:10px; padding-top:28px; }
+  .btn-accept { width:100%; background:var(--accent); color:#fff; border:none; border-radius:100px; padding:17px; font-family:'Noto Sans JP',sans-serif; font-size:15px; font-weight:600; cursor:pointer; transition:opacity .15s; }
+  .btn-accept:active { opacity:.8; }
+  .btn-row { display:flex; gap:10px; }
+  .btn-sec { flex:1; background:transparent; color:var(--sub); border:1.5px solid var(--border); border-radius:100px; padding:14px; font-family:'Noto Sans JP',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s; }
+  .btn-sec:active { background:var(--accent-light); }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status-bar">
+    <span class="status-time" id="clockTime">9:41</span>
+    <div class="battery"><div class="battery-fill"></div></div>
+  </div>
+  <div class="dynamic-island"></div>
+
+  <div class="screen">
+    <div class="app-header">
+      <div class="greeting" id="greeting">おはようございます</div>
+      <div class="app-title">今日の決断</div>
+    </div>
+
+    <div class="section-label">今日の気分</div>
+    <div class="mood-strip">
+      <div class="mood-chip active" data-mood="普通" onclick="selectMood(this)">😐 普通</div>
+      <div class="mood-chip" data-mood="元気" onclick="selectMood(this)">😄 元気</div>
+      <div class="mood-chip" data-mood="疲れ気味" onclick="selectMood(this)">😪 疲れた</div>
+      <div class="mood-chip" data-mood="ストレス気味" onclick="selectMood(this)">😤 ストレス</div>
+      <div class="mood-chip" data-mood="のんびりモード" onclick="selectMood(this)">😌 のんびり</div>
+    </div>
+
+    <div class="section-label">タップして即決断</div>
+    <div class="cat-grid">
+      <div class="cat-btn" onclick="openCat(this,'dinner')">
+        <span class="cat-btn-icon">🍽️</span>
+        <span class="cat-btn-name">夕ごはん</span>
+        <span class="cat-btn-hint">何食べる？</span>
+      </div>
+      <div class="cat-btn" onclick="openCat(this,'break')">
+        <span class="cat-btn-icon">☕</span>
+        <span class="cat-btn-name">休憩</span>
+        <span class="cat-btn-hint">どう休む？</span>
+      </div>
+      <div class="cat-btn" onclick="openCat(this,'music')">
+        <span class="cat-btn-icon">🎵</span>
+        <span class="cat-btn-name">今日の音楽</span>
+        <span class="cat-btn-hint">何を聴く？</span>
+      </div>
+      <div class="cat-btn" onclick="openCat(this,'movie')">
+        <span class="cat-btn-icon">🎬</span>
+        <span class="cat-btn-name">映画</span>
+        <span class="cat-btn-hint">今夜何観る？</span>
+      </div>
+      <div class="cat-btn" onclick="openCat(this,'exercise')">
+        <span class="cat-btn-icon">💪</span>
+        <span class="cat-btn-name">今日の運動</span>
+        <span class="cat-btn-hint">何する？</span>
+      </div>
+      <div class="cat-btn" onclick="openCat(this,'bored')">
+        <span class="cat-btn-icon">🎮</span>
+        <span class="cat-btn-name">暇つぶし</span>
+        <span class="cat-btn-hint">何しよう？</span>
+      </div>
+    </div>
+
+    <div class="history-section">
+      <div class="section-label">今日の記録</div>
+      <div id="historyContainer"></div>
+    </div>
+  </div>
+
+  <!-- OVERLAY -->
+  <div class="overlay" id="overlay">
+
+    <div class="ov-loading" id="ovLoading">
+      <div class="load-icon" id="loadIcon">🍽️</div>
+      <div class="load-text">3つ考えています...</div>
+      <div class="load-dots"><span></span><span></span><span></span></div>
+    </div>
+
+    <div class="ov-choices" id="ovChoices">
+      <div class="ov-header">
+        <div class="ov-cat-label" id="ovCatLabel"></div>
+        <button class="ov-close" onclick="closeOverlay()">✕</button>
+      </div>
+      <div class="ov-question" id="ovQuestion"></div>
+      <div class="choices-list" id="choicesList"></div>
+      <button class="choices-refresh" onclick="refreshChoices()">↺ 別の3つを見る</button>
+    </div>
+
+    <!-- レシピ画面（夕ごはん専用） -->
+    <div class="ov-recipe" id="ovRecipe">
+      <div class="recipe-header">
+        <button class="recipe-back" onclick="backToChoices()">←</button>
+        <div class="ov-cat-label">夕ごはん</div>
+        <button class="ov-close" onclick="closeOverlay()">✕</button>
+      </div>
+      <div class="recipe-title" id="recipeName"></div>
+      <div class="recipe-sub" id="recipeSub"></div>
+      <div class="recipe-meta" id="recipeMeta"></div>
+      <div class="recipe-section-title">材料</div>
+      <div class="ingredient-list" id="ingredientList"></div>
+      <div class="recipe-section-title">作り方</div>
+      <div class="step-list" id="stepList"></div>
+      <button class="recipe-accept-btn" onclick="acceptRecipe()">今夜これを作る！ ✓</button>
+    </div>
+
+    <div class="ov-result" id="ovResult">
+      <div class="result-top">
+        <div class="res-icon" id="resIcon"></div>
+        <div class="res-small">あなたの選択</div>
+        <div class="res-answer" id="resAnswer"></div>
+        <div class="res-divider"></div>
+        <div class="res-reason" id="resReason"></div>
+      </div>
+      <div class="res-actions">
+        <button class="btn-accept" onclick="accept()">これで決まり！ ✓</button>
+        <div class="btn-row">
+          <button class="btn-sec" onclick="backToChoices()">← 選び直す</button>
+          <button class="btn-sec" onclick="closeOverlay()">✕ 閉じる</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── 時計・挨拶 ──
+  function updateClock() {
+    const d = new Date(), h = d.getHours();
+    document.getElementById('clockTime').textContent = h + ':' + String(d.getMinutes()).padStart(2,'0');
+    document.getElementById('greeting').textContent = h < 11 ? 'おはようございます' : h < 17 ? 'こんにちは' : 'こんばんは';
+  }
+  updateClock(); setInterval(updateClock, 10000);
+
+  const catIcons = { dinner:'🍽️', break:'☕', music:'🎵', movie:'🎬', exercise:'💪', bored:'🎮' };
+  const catNames = { dinner:'夕ごはん', break:'休憩', music:'今日の音楽', movie:'映画', exercise:'今日の運動', bored:'暇つぶし' };
+
+  const questions = {
+    dinner:   '今夜のごはん、\nどれにする？',
+    break:    '休憩の過ごし方、\nどれにする？',
+    music:    '今日聴く音楽、\nどれにする？',
+    movie:    '今夜の映画、\nどれにする？',
+    exercise: '今日の運動、\nどれにする？',
+    bored:    '暇つぶし、\nどれにする？',
+  };
+
+  const prompts = {
+    dinner:   '夕ごはんのメニューを3つ提案して。日本でよく食べられる具体的なメニュー名で。',
+    break:    '5〜15分でできる休憩・気分転換を3つ提案して。',
+    music:    '今日聴くと気分が上がる具体的な曲名を3つ提案して。「曲名 / アーティスト名」の形式で。日本・海外問わず。',
+    movie:    '今夜観るのにおすすめの具体的な映画やドラマのタイトルを3つ提案して。「タイトル（公開年）」の形式で。日本・海外問わず。',
+    exercise: '今日できる運動・体を動かす方法を3つ提案して。10〜30分でできるもので。',
+    bored:    '暇なときに楽しめる暇つぶしを3つ提案して。すぐ始められるもので。',
+  };
+
+  let selectedMood    = '普通';
+  let currentCat      = null;
+  let currentChoices  = [];
+  let previousChoices = [];
+
+  let history = (() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('kd_v6') || '[]');
+      const today = new Date().toDateString();
+      return raw.filter(h => new Date(h.ts).toDateString() === today);
+    } catch { return []; }
+  })();
+
+  function selectMood(el) {
+    document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    selectedMood = el.dataset.mood;
+  }
+
+  function openCat(btn, cat) {
+    const r = document.createElement('div'); r.className = 'ripple';
+    btn.appendChild(r); setTimeout(() => r.remove(), 500);
+
+    currentCat      = cat;
+    previousChoices = [];
+
+    document.getElementById('loadIcon').textContent = catIcons[cat];
+    document.getElementById('overlay').classList.add('show');
+    showLoading();
+    fetchChoices();
+  }
+
+  function showLoading() {
+    document.getElementById('ovLoading').classList.remove('hidden');
+    document.getElementById('ovChoices').classList.remove('show');
+    document.getElementById('ovResult').classList.remove('show');
+    document.getElementById('ovRecipe').classList.remove('show');
+  }
+
+  async function fetchChoices() {
+    const exclude = previousChoices.length > 0
+      ? `\n以下はすでに表示済みです。必ずこれら全てと異なるものを3つ提案してください：\n${previousChoices.map(c => '・' + c.name).join('\n')}`
+      : '';
+
+    const prompt = `あなたは日常の決断を助けるAIです。
+カテゴリ：${catNames[currentCat]}
+今日の気分：${selectedMood}
+${prompts[currentCat]}${exclude}
+
+JSONのみで返答（マークダウン不要）：
+{"choices":[
+  {"name":"提案名（12文字以内）","desc":"一言説明（22文字以内）"},
+  {"name":"提案名（12文字以内）","desc":"一言説明（22文字以内）"},
+  {"name":"提案名（12文字以内）","desc":"一言説明（22文字以内）"}
+]}`;
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          max_tokens: 400,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await res.json();
+      const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+      previousChoices = [...previousChoices, ...parsed.choices];
+      currentChoices  = parsed.choices;
+    } catch {
+      const fallbacks = {
+        dinner:   [{name:'カレーライス',desc:'スパイスで元気チャージ'},{name:'鍋料理',desc:'体も心も温まる'},{name:'パスタ',desc:'手軽でボリューム満点'}],
+        break:    [{name:'深呼吸10回',desc:'すぐできるリセット'},{name:'外の空気を吸う',desc:'気分転換の王道'},{name:'お茶を飲む',desc:'ひと息ついてリフレッシュ'}],
+        music:    [{name:'Dynamite / BTS',desc:'テンションが上がる定番'},{name:'怪獣の花唄 / Vaundy',desc:'思わず口ずさむ一曲'},{name:'Blinding Lights / The Weeknd',desc:'ドライブにも最高'}],
+        movie:    [{name:'ショーシャンクの空に（1994）',desc:'見終わった後に前向きになれる'},{name:'千と千尋の神隠し（2001）',desc:'何度見ても飽きない名作'},{name:'インターステラー（2014）',desc:'壮大なスケールに圧倒される'}],
+        exercise: [{name:'ウォーキング20分',desc:'手軽に始められる'},{name:'ストレッチ',desc:'体の疲れをほぐす'},{name:'筋トレ（自重）',desc:'道具なしで全身運動'}],
+        bored:    [{name:'読書',desc:'知識と想像力が広がる'},{name:'落書き・お絵描き',desc:'なんでも気軽に'},{name:'散歩',desc:'外の空気で気分転換'}],
+      };
+      currentChoices = fallbacks[currentCat] || fallbacks.dinner;
+    }
+
+    renderChoices();
+  }
+
+  function renderChoices() {
+    document.getElementById('ovCatLabel').textContent = catNames[currentCat];
+    document.getElementById('ovQuestion').textContent = questions[currentCat];
+    document.getElementById('choicesList').innerHTML = currentChoices.map((c, i) => `
+      <div class="choice-card" onclick="selectChoice(${i})">
+        <div class="choice-num">${i + 1}</div>
+        <div class="choice-info">
+          <div class="choice-name">${c.name}</div>
+          <div class="choice-desc">${c.desc}</div>
+        </div>
+        <div class="choice-arrow">›</div>
+      </div>
+    `).join('');
+
+    document.getElementById('ovLoading').classList.add('hidden');
+    document.getElementById('ovChoices').classList.add('show');
+  }
+
+  async function selectChoice(idx) {
+    const choice = currentChoices[idx];
+    showLoading();
+    document.getElementById('loadIcon').textContent = catIcons[currentCat];
+
+    if (currentCat === 'dinner') {
+      await fetchRecipe(choice.name);
+      return;
+    }
+    if (currentCat === 'movie') {
+      await showMovieResult(choice);
+      return;
+    }
+
+    const prompt = `「${choice.name}」を選んだ人への一言を書いてください。
+今日の気分：${selectedMood}
+温かく背中を押す一文で。40文字以内。`;
+
+    let reason = choice.desc + '。今日もいい選択です！';
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          max_tokens: 100,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await res.json();
+      reason = data.content[0].text.trim().replace(/^「|」$/g, '');
+    } catch {}
+
+    document.getElementById('resIcon').textContent = catIcons[currentCat];
+    document.getElementById('resAnswer').textContent = choice.name;
+    document.getElementById('resReason').textContent = reason;
+    document.getElementById('ovLoading').classList.add('hidden');
+    document.getElementById('ovResult').classList.add('show');
+  }
+
+  async function showMovieResult(choice) {
+    // タイトルから年号を除いた検索用タイトルを作成
+    const searchTitle = choice.name.replace(/（\d{4}）$/, '').trim();
+    const jwUrl = 'https://www.justwatch.com/jp/search?q=' + encodeURIComponent(searchTitle);
+
+    let reason = choice.desc + '。今夜はこれで決まり！';
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          max_tokens: 100,
+          messages: [{ role: "user", content: `映画「${choice.name}」の魅力を一文で。今日の気分：${selectedMood}。40文字以内。` }]
+        })
+      });
+      const data = await res.json();
+      reason = data.content[0].text.trim().replace(/^「|」$/g, '');
+    } catch {}
+
+    document.getElementById('resIcon').textContent = '🎬';
+    document.getElementById('resAnswer').textContent = choice.name;
+    document.getElementById('resReason').innerHTML =
+      reason + '<br><br><a href="' + jwUrl + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#f0f0ee;border:1px solid #e8e8e4;border-radius:100px;padding:8px 16px;font-size:12px;color:#1a1a1a;text-decoration:none;font-weight:600;margin-top:4px;">🔍 どのサブスクで観られる？</a>';
+    document.getElementById('ovLoading').classList.add('hidden');
+    document.getElementById('ovResult').classList.add('show');
+  }
+
+  async function fetchRecipe(dishName) {
+    const prompt = `「${dishName}」のレシピをJSONで返してください。
+2人前、家庭で作りやすいシンプルなレシピで。
+
+JSONのみ返答（マークダウン不要）：
+{
+  "name": "料理名",
+  "desc": "一言説明（20文字以内）",
+  "time": "調理時間（例：20分）",
+  "difficulty": "難易度（例：簡単）",
+  "servings": "2人前",
+  "ingredients": [
+    {"name": "材料名", "amount": "分量"},
+    ...
+  ],
+  "steps": [
+    "手順1",
+    "手順2",
+    ...
+  ]
+}`;
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          max_tokens: 800,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await res.json();
+      const recipe = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+      renderRecipe(recipe);
+    } catch {
+      renderRecipe({
+        name: dishName,
+        desc: '家庭の定番メニュー',
+        time: '30分',
+        difficulty: '普通',
+        servings: '2人前',
+        ingredients: [{name:'各種材料',amount:'適量'}],
+        steps: ['材料を準備する','調理する','盛り付けて完成！']
+      });
+    }
+  }
+
+  function renderRecipe(recipe) {
+    document.getElementById('recipeName').textContent = recipe.name;
+    document.getElementById('recipeSub').textContent = recipe.desc;
+    document.getElementById('recipeMeta').innerHTML = `
+      <div class="recipe-meta-item"><span class="meta-val">${recipe.time}</span><span class="meta-label">調理時間</span></div>
+      <div class="recipe-meta-item"><span class="meta-val">${recipe.difficulty}</span><span class="meta-label">難易度</span></div>
+      <div class="recipe-meta-item"><span class="meta-val">${recipe.servings}</span><span class="meta-label">分量</span></div>
+    `;
+    document.getElementById('ingredientList').innerHTML = recipe.ingredients.map(i => `
+      <div class="ingredient-row">
+        <span class="ingredient-name">${i.name}</span>
+        <span class="ingredient-amount">${i.amount}</span>
+      </div>
+    `).join('');
+    document.getElementById('stepList').innerHTML = recipe.steps.map((s, i) => `
+      <div class="step-item">
+        <div class="step-num">${i + 1}</div>
+        <div class="step-text">${s}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('ovLoading').classList.add('hidden');
+    document.getElementById('ovRecipe').classList.add('show');
+  }
+
+  function acceptRecipe() {
+    const name = document.getElementById('recipeName').textContent;
+    history.unshift({
+      answer: name, cat: 'dinner',
+      ts: new Date().toISOString(),
+      time: new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' })
+    });
+    localStorage.setItem('kd_v6', JSON.stringify(history));
+    renderHistory();
+    closeOverlay();
+  }
+
+  function backToChoices() {
+    document.getElementById('ovResult').classList.remove('show');
+    document.getElementById('ovRecipe').classList.remove('show');
+    document.getElementById('ovChoices').classList.add('show');
+  }
+
+  async function refreshChoices() {
+    showLoading();
+    await fetchChoices();
+  }
+
+  function accept() {
+    const answer = document.getElementById('resAnswer').textContent;
+    history.unshift({
+      answer, cat: currentCat,
+      ts: new Date().toISOString(),
+      time: new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' })
+    });
+    localStorage.setItem('kd_v6', JSON.stringify(history));
+    renderHistory();
+    closeOverlay();
+  }
+
+  function closeOverlay() {
+    document.getElementById('overlay').classList.remove('show');
+    setTimeout(() => {
+      showLoading();
+      document.getElementById('ovLoading').classList.add('hidden');
+    }, 400);
+  }
+
+  function renderHistory() {
+    const c = document.getElementById('historyContainer');
+    if (!history.length) {
+      c.innerHTML = '<div class="history-empty">記録はまだありません</div>';
+      return;
+    }
+    c.innerHTML = `<div class="history-card">${
+      history.map(h => `
+        <div class="history-item">
+          <div class="h-icon">${catIcons[h.cat] || '🎯'}</div>
+          <div class="h-info">
+            <div class="h-ans">${h.answer}</div>
+            <div class="h-meta">${catNames[h.cat] || ''} · ${h.time}</div>
+          </div>
+          <div class="h-check">✓</div>
+        </div>
+      `).join('')
+    }</div>`;
+  }
+
+  renderHistory();
+</script>
+</body>
+</html>
