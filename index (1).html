@@ -113,7 +113,7 @@
 
   .ov-question { font-size:22px; font-weight:700; letter-spacing:-.3px; margin-bottom:28px; line-height:1.35; white-space:pre-line; }
 
-  .choices-list { display:flex; flex-direction:column; gap:12px; flex:1; }
+  .choices-list { display:flex; flex-direction:column; gap:12px; }
 
   .choice-card {
     background:var(--bg); border:1.5px solid var(--border);
@@ -135,8 +135,8 @@
   .choice-desc { font-size:12px; color:var(--sub); line-height:1.4; }
   .choice-arrow { font-size:16px; color:var(--sub); }
 
-  .choices-refresh { margin-top:20px; text-align:center; background:none; border:none; font-family:'Noto Sans JP',sans-serif; font-size:13px; color:var(--sub); cursor:pointer; padding:8px; transition:color .15s; }
-  .choices-refresh:hover { color:var(--text); }
+  .choices-refresh { display:block; width:100%; text-align:center; background:var(--accent-light); border:none; border-radius:100px; font-family:'Noto Sans JP',sans-serif; font-size:13px; font-weight:600; color:var(--sub); cursor:pointer; padding:11px 0; margin-bottom:14px; transition:all .15s; }
+  .choices-refresh:hover { background:var(--border); color:var(--text); }
 
   /* 結果画面 */
   .ov-recipe { display:none; flex-direction:column; padding:48px 24px 32px; flex:1; overflow-y:auto; }
@@ -211,6 +211,48 @@
   /* 日付グループ */
   .history-date-group { margin-bottom:12px; }
   .history-date-label { font-size:11px; font-weight:600; color:var(--sub); letter-spacing:.05em; margin-bottom:8px; padding-left:2px; }
+
+  /* ストリーク */
+  .streak-bar { display:flex; align-items:center; gap:10px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; margin-bottom:28px; }
+  .streak-fire { font-size:22px; }
+  .streak-info { flex:1; }
+  .streak-count { font-size:18px; font-weight:700; line-height:1; }
+  .streak-label { font-size:11px; color:var(--sub); margin-top:2px; }
+  .streak-days { display:flex; gap:5px; }
+  .streak-dot { width:8px; height:8px; border-radius:50%; background:var(--border); }
+  .streak-dot.done { background:var(--accent); }
+
+  /* シェアボタン */
+  .btn-share { flex:1; background:transparent; color:var(--sub); border:1.5px solid var(--border); border-radius:100px; padding:14px; font-family:'Noto Sans JP',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .btn-share:active { background:var(--accent-light); }
+
+  /* 週次レポートオーバーレイ */
+  .report-overlay { position:absolute; inset:0; background:var(--white); border-radius:44px; z-index:25; display:none; flex-direction:column; padding:48px 24px 40px; overflow-y:auto; }
+  .report-overlay.show { display:flex; }
+  .report-overlay::-webkit-scrollbar { display:none; }
+  .report-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .report-title { font-size:22px; font-weight:700; }
+  .report-sub { font-size:13px; color:var(--sub); margin-bottom:24px; }
+  .report-card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin-bottom:12px; }
+  .report-card-title { font-size:11px; font-weight:600; color:var(--sub); letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px; }
+  .report-stat { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+  .report-stat:last-child { border-bottom:none; }
+  .report-stat-label { color:var(--sub); }
+  .report-stat-val { font-weight:700; }
+  .report-big { text-align:center; padding:16px 0; }
+  .report-big-num { font-size:48px; font-weight:700; display:block; line-height:1; }
+  .report-big-label { font-size:13px; color:var(--sub); margin-top:6px; display:block; }
+  .report-bar-row { margin-bottom:8px; }
+  .report-bar-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; }
+  .report-bar-label span:last-child { color:var(--sub); }
+  .report-bar-track { background:var(--border); border-radius:100px; height:6px; overflow:hidden; }
+  .report-bar-fill { height:100%; background:var(--accent); border-radius:100px; transition:width .5s ease; }
+  .report-btn { width:100%; background:var(--accent); color:#fff; border:none; border-radius:100px; padding:17px; font-family:'Noto Sans JP',sans-serif; font-size:15px; font-weight:600; cursor:pointer; margin-top:16px; }
+  .report-trigger { display:flex; align-items:center; gap:8px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; margin-bottom:28px; cursor:pointer; transition:background .15s; }
+  .report-trigger:active { background:var(--accent-light); }
+  .report-trigger-icon { font-size:20px; }
+  .report-trigger-text { flex:1; font-size:13px; font-weight:500; }
+  .report-trigger-arrow { font-size:14px; color:var(--sub); }
 </style>
 </head>
 <body>
@@ -276,6 +318,19 @@
         <button class="history-tab" onclick="switchTab(this,'all')">すべて</button>
       </div>
       <div id="historyContainer"></div>
+      <div class="streak-bar" id="streakBar" style="margin-top:12px;margin-bottom:0;">
+        <div class="streak-fire">🔥</div>
+        <div class="streak-info">
+          <div class="streak-count" id="streakCount">0日</div>
+          <div class="streak-label">連続決断中</div>
+        </div>
+        <div class="streak-days" id="streakDots"></div>
+      </div>
+      <div class="report-trigger" onclick="showReport()" style="margin-top:10px;margin-bottom:0;">
+        <div class="report-trigger-icon">📊</div>
+        <div class="report-trigger-text">今週のレポートを見る</div>
+        <div class="report-trigger-arrow">›</div>
+      </div>
     </div>
   </div>
 
@@ -301,6 +356,31 @@
     <button class="ob-btn" onclick="startApp()">はじめる →</button>
   </div>
 
+  <!-- 週次レポート -->
+  <div class="report-overlay" id="reportOverlay">
+    <div class="report-header">
+      <div class="report-title">今週のレポート</div>
+      <button class="ov-close" onclick="hideReport()">✕</button>
+    </div>
+    <div class="report-sub" id="reportSub"></div>
+    <div class="report-card">
+      <div class="report-card-title">決断サマリー</div>
+      <div class="report-big">
+        <span class="report-big-num" id="reportTotal">0</span>
+        <span class="report-big-label">今週の決断数</span>
+      </div>
+    </div>
+    <div class="report-card">
+      <div class="report-card-title">カテゴリ別</div>
+      <div id="reportCats"></div>
+    </div>
+    <div class="report-card">
+      <div class="report-card-title">よく選んだもの</div>
+      <div id="reportTop"></div>
+    </div>
+    <button class="report-btn" onclick="hideReport()">閉じる</button>
+  </div>
+
   <!-- OVERLAY -->
   <div class="overlay" id="overlay">
 
@@ -317,8 +397,8 @@
         <button class="ov-close" onclick="closeOverlay()">✕</button>
       </div>
       <div class="ov-question" id="ovQuestion"></div>
-      <div class="choices-list" id="choicesList"></div>
       <button class="choices-refresh" onclick="refreshChoices()">↺ 別の3つを見る</button>
+      <div class="choices-list" id="choicesList"></div>
     </div>
 
     <!-- レシピ画面（夕ごはん専用） -->
@@ -350,7 +430,8 @@
         <button class="btn-accept" onclick="accept()">これで決まり！ ✓</button>
         <div class="btn-row">
           <button class="btn-sec" onclick="backToChoices()">← 選び直す</button>
-          <button class="btn-sec" onclick="closeOverlay()">✕ 閉じる</button>
+          <button class="btn-share" onclick="shareResult()">📤 シェア</button>
+          <button class="btn-sec" onclick="closeOverlay()">✕</button>
         </div>
       </div>
     </div>
@@ -370,22 +451,50 @@
   const catIcons = { dinner:'🍽️', break:'☕', music:'🎵', movie:'🎬', exercise:'💪', bored:'🎮' };
   const catNames = { dinner:'夕ごはん', break:'休憩', music:'今日の音楽', movie:'映画', exercise:'今日の運動', bored:'暇つぶし' };
 
-  const questions = {
-    dinner:   '今夜のごはん、\nどれにする？',
-    break:    '休憩の過ごし方、\nどれにする？',
-    music:    '今日聴く音楽、\nどれにする？',
-    movie:    '今夜の映画、\nどれにする？',
-    exercise: '今日の運動、\nどれにする？',
-    bored:    '暇つぶし、\nどれにする？',
-  };
-
-  const prompts = {
-    dinner:   '夕ごはんのメニューを3つ提案して。日本でよく食べられる具体的なメニュー名で。',
-    break:    '5〜15分でできる休憩・気分転換を3つ提案して。',
-    music:    '今日聴くと気分が上がる具体的な曲名を3つ提案して。「曲名 / アーティスト名」の形式で。日本・海外問わず。',
-    movie:    '今夜観るのにおすすめの具体的な映画やドラマのタイトルを3つ提案して。「タイトル（公開年）」の形式で。日本・海外問わず。',
-    exercise: '今日できる運動・体を動かす方法を3つ提案して。10〜30分でできるもので。',
-    bored:    '暇なときに楽しめる暇つぶしを3つ提案して。すぐ始められるもので。',
+  // ── 気分×カテゴリ別 大量選択肢プール ──
+  const pool = {
+    dinner: {
+      '普通':         [{n:'親子丼',d:'ふわとろで心が落ち着く'},{n:'カレーライス',d:'スパイスで元気チャージ'},{n:'パスタ',d:'手軽でボリューム満点'},{n:'焼き魚定食',d:'バランス◎の和食'},{n:'うどん',d:'やさしい味でほっこり'},{n:'炒め物定食',d:'野菜たっぷりヘルシー'},{n:'豚汁定食',d:'体の芯から温まる'},{n:'ハンバーグ',d:'みんな大好きな定番'},{n:'サバの味噌煮',d:'栄養たっぷりの和食'},{n:'チャーハン',d:'手軽に作れる一品'}],
+      '元気':         [{n:'ステーキ',d:'元気な日はガッツリいこう'},{n:'スパイシーカレー',d:'刺激的な辛さで気分爽快'},{n:'焼き肉',d:'肉をがっつり食べよう'},{n:'ラーメン',d:'こってり系で満足度MAX'},{n:'餃子定食',d:'ボリューム満点で大満足'},{n:'唐揚げ定食',d:'揚げたてはテンション上がる'},{n:'チキン南蛮',d:'甘酸っぱくてやみつき'},{n:'豚カツ定食',d:'サクサクで元気が出る'},{n:'ビビンバ',d:'カラフルでエネルギー満点'},{n:'台湾まぜそば',d:'ガツンとくる刺激的な一杯'}],
+      '疲れ気味':     [{n:'雑炊',d:'体に優しくほっとする'},{n:'うどん',d:'消化良くて疲れた胃に最適'},{n:'湯豆腐',d:'シンプルで体が喜ぶ'},{n:'おじや',d:'10分で作れる癒しの一杯'},{n:'茶碗蒸し定食',d:'ふわふわで疲れが飛ぶ'},{n:'鶏のスープ煮',d:'栄養たっぷりで回復力UP'},{n:'豆腐チゲ',d:'温かくて優しい辛さ'},{n:'素うどん',d:'シンプルが一番の夜'},{n:'卵かけご飯',d:'最速で食べられる最強飯'},{n:'冷奴と白米',d:'作らなくていい日もある'}],
+      'ストレス気味': [{n:'激辛ラーメン',d:'辛さでストレスを吹き飛ばす'},{n:'焼き肉',d:'肉を焼いてモヤモヤ解消'},{n:'唐揚げ',d:'揚げ物で気分スカッと'},{n:'担々麺',d:'ピリ辛でスッキリ発散'},{n:'スパイシー炒飯',d:'思い切り作って発散しよう'},{n:'ガパオライス',d:'エスニックな刺激で気分転換'},{n:'キムチ鍋',d:'辛さで心も体もリセット'},{n:'麻婆豆腐',d:'しびれる辛さで頭が空っぽに'},{n:'カレーうどん',d:'スパイスでモヤモヤ消える'},{n:'メキシコ料理',d:'異国の味でリフレッシュ'}],
+      'のんびりモード':[{n:'おでん',d:'ゆっくり煮込む至福の時間'},{n:'しゃぶしゃぶ',d:'のんびり食べるのが最高'},{n:'鍋料理',d:'じっくり温まりながら食べよう'},{n:'炊き込みご飯',d:'炊けるまでの香りが幸せ'},{n:'茶碗蒸し',d:'ゆっくり蒸す丁寧な一品'},{n:'だし茶漬け',d:'シンプルに味わう豊かさ'},{n:'筑前煮',d:'じっくり煮た和の味'},{n:'豚の角煮',d:'時間をかける贅沢な一皿'},{n:'クリームシチュー',d:'ゆっくり煮込んで温まろう'},{n:'ポトフ',d:'野菜がとろとろ優しい味'}],
+    },
+    break: {
+      '普通':         [{n:'お茶を飲む',d:'ひと息ついてリフレッシュ'},{n:'外の空気を吸う',d:'気分転換の王道'},{n:'深呼吸10回',d:'すぐできるリセット'},{n:'軽くストレッチ',d:'体のこわばりを解消'},{n:'好きな動画を見る',d:'短時間でリフレッシュ'},{n:'甘いものを食べる',d:'小さなご褒美タイム'},{n:'音楽を聴く',d:'気分がすぐ変わる'},{n:'窓の外を眺める',d:'目を休めながらぼーっと'},{n:'水を一杯飲む',d:'シンプルだけど効果抜群'},{n:'5分間昼寝',d:'短い仮眠で頭スッキリ'}],
+      '元気':         [{n:'近所をダッシュ',d:'余ったエネルギーを発散'},{n:'階段を上り下り',d:'体を動かして気持ちよく'},{n:'友達に連絡する',d:'元気な気分をシェアしよう'},{n:'新しいカフェに寄る',d:'冒険気分で気分転換'},{n:'公園でフリスビー',d:'体を動かして楽しもう'},{n:'好きな曲に合わせて踊る',d:'思い切り体を動かそう'},{n:'SNSで近況をシェア',d:'元気な自分を発信しよう'},{n:'ちょっとした買い物',d:'気分転換に散歩がてら'},{n:'ジャンプを20回',d:'すぐできるエネルギー発散'},{n:'ラジオ体操',d:'全身スッキリ気持ちいい'}],
+      '疲れ気味':     [{n:'目を閉じて10分休む',d:'疲れた目と脳を休ませよう'},{n:'横になってぼーっとする',d:'何も考えない時間が大事'},{n:'温かい飲み物を飲む',d:'体の内側からほっとする'},{n:'軽くストレッチ',d:'凝り固まった体を解放'},{n:'アイマスクをする',d:'目の疲れをリセット'},{n:'好きな音楽をイヤホンで',d:'外の音を遮断して癒される'},{n:'ぬるめのお風呂に入る',d:'疲れを水に流す最高の休憩'},{n:'マッサージをする',d:'肩・首をほぐしてスッキリ'},{n:'好きな香りを嗅ぐ',d:'嗅覚から心をリラックス'},{n:'何もしない5分',d:'休むことが最優先の今日'}],
+      'ストレス気味': [{n:'枕に叫ぶ',d:'誰にも迷惑かけない発散法'},{n:'思い切り歩く',d:'歩いてモヤモヤを消化'},{n:'紙をびりびりに破る',d:'原始的な発散が意外と効く'},{n:'好きな曲をフルボリュームで',d:'音楽でストレスをぶっ飛ばす'},{n:'水をがぶがぶ飲む',d:'内側からリセット'},{n:'冷たいシャワーを浴びる',d:'頭を冷やして気持ちをリセット'},{n:'手を洗って気持ちを流す',d:'シンプルだが心理的に効果あり'},{n:'スクワット20回',d:'体を動かしてモヤモヤ解消'},{n:'愚痴を紙に書いて捨てる',d:'書いて捨てると本当にスッキリ'},{n:'好きなお笑い動画を見る',d:'笑いは最強のストレス解消'}],
+      'のんびりモード':[{n:'のんびりお茶を飲む',d:'急がない時間を楽しもう'},{n:'窓から景色を眺める',d:'ぼーっとするのも大事な時間'},{n:'好きな本をめくる',d:'活字の世界でのんびり過ごす'},{n:'日記を書く',d:'今日の気持ちをゆっくり整理'},{n:'観葉植物の世話をする',d:'植物と会話するような穏やかさ'},{n:'昔の写真を見返す',d:'記憶の旅でほっこり'},{n:'空を眺める',d:'雲の形を見つけてのんびり'},{n:'ハーブティーを淹れる',d:'香りから丁寧な時間を作る'},{n:'好きな映画のサントラを流す',d:'BGMで気分をゆったり'},{n:'手紙を書く',d:'誰かに気持ちを伝えてみよう'}],
+    },
+    music: {
+      '普通':         [{n:'夜に駆ける / YOASOBI',d:'疾走感がクセになる一曲'},{n:'Dynamite / BTS',d:'テンションが上がる定番'},{n:'白日 / King Gnu',d:'しっとり心に染み渡る'},{n:'Blinding Lights / The Weeknd',d:'夜のドライブに最高'},{n:'群青 / YOASOBI',d:'美しいメロディが響く'},{n:'Shake It Off / Taylor Swift',d:'元気が出るポップアンセム'},{n:'うっせぇわ / Ado',d:'気持ちを代弁してくれる'},{n:'Passionfruit / Drake',d:'夜にじんわり染みるR&B'},{n:'いつか / Yogee New Waves',d:'浮遊感あるシティポップ'},{n:'Shape of You / Ed Sheeran',d:'ノリノリになれる一曲'},{n:'ひかりのなかに / iri',d:'シティポップ×R&Bの融合'},{n:'怪獣の花唄 / Vaundy',d:'思わず口ずさむ一曲'}],
+      '元気':         [{n:'KICK BACK / 米津玄師',d:'疾走感で気分爆上がり'},{n:"Can't Stop Me Now / Imagine Dragons",d:'止まれない気持ちに最高'},{n:'Believer / Imagine Dragons',d:'気合が入るロックアンセム'},{n:'MONSTER / Imagine Dragons',d:'激しいロックで気分MAX'},{n:'うっせぇわ / Ado',d:'ストレス発散に最高'},{n:'Rockstar / Post Malone',d:'テンション爆上がり'},{n:'BOY WITH LUV / BTS',d:'踊りたくなる明るい曲'},{n:'Permission to Dance / BTS',d:'体が自然に動く一曲'},{n:'Electric Feel / MGMT',d:'聴けば踊りたくなる名曲'},{n:'Pump It / Black Eyed Peas',d:'運動したくなるビート'},{n:'Stronger / Kanye West',d:'無敵感が出るヒップホップ'},{n:"Don't Stop Me Now / Queen",d:'最高にアップテンポな名曲'}],
+      '疲れ気味':     [{n:'白日 / King Gnu',d:'疲れた夜にそっと寄り添う'},{n:'群青 / YOASOBI',d:'涙が出るほど美しい'},{n:'Clair de Lune / Debussy',d:'心が静まるピアノの名曲'},{n:'花束みたいな恋をした / 坂口有望',d:'優しい声に癒される'},{n:'Somewhere Only We Know / Keane',d:'穏やかに心が温まる'},{n:'空に歌えば / Amazon',d:'のびやかな声で癒される'},{n:'Retrograde / James Blake',d:'疲れた夜に染みるUKソウル'},{n:'Satie Gymnopédie No.1',d:'静かなピアノで頭を空にする'},{n:'やさしさに包まれたなら / 荒井由実',d:'昔懐かしい優しさ'},{n:'Lost in the Light / Bahamas',d:'穏やかなフォークで癒し'},{n:'First Love / 宇多田ヒカル',d:'心が溶けるバラード'},{n:'三日月 / 絢香',d:'切なくも温かいバラード'}],
+      'ストレス気味': [{n:'MONSTER / Imagine Dragons',d:'激しさでストレスを吹き飛ばす'},{n:'Killing in the Name / RAGE AGAINST THE MACHINE',d:'怒りをぶつけるハードロック'},{n:'Break Stuff / Limp Bizkit',d:'発散したい日の定番'},{n:'Bohemian Rhapsody / Queen',d:'感情を全部ぶつけよう'},{n:'In The End / Linkin Park',d:'叫んで発散できる名曲'},{n:'Given Up / Linkin Park',d:'激しさで頭が空になる'},{n:'Gold (Stupid Love) / Ciara',d:'ビートで気分をリセット'},{n:'Numb / Linkin Park',d:'共感できる言葉で楽になる'},{n:'Sabotage / Beastie Boys',d:'勢いで発散できるロック'},{n:'Lose Yourself / Eminem',d:'集中してストレスを消す'},{n:'The Red / Chevelle',d:'激しいロックで感情放出'},{n:'Bodies / Drowning Pool',d:'究極の発散チューン'}],
+      'のんびりモード':[{n:'Bossa Nova Café BGM',d:'カフェのような穏やかな時間'},{n:'いつか / Yogee New Waves',d:'浮遊感あるシティポップ'},{n:'Fly Me to the Moon / Frank Sinatra',d:'古き良きジャズの名曲'},{n:'La Vie en Rose / Édith Piaf',d:'パリのカフェ気分に'},{n:'Corcovado / Stan Getz',d:'ボサノバの静かな名曲'},{n:'Autumn Leaves / Bill Evans',d:'秋の夕暮れのようなピアノ'},{n:'Redbone / Childish Gambino',d:'グルーヴィーで心地よい'},{n:'Passionfruit / Drake',d:'ゆったり流れる夜のR&B'},{n:'ひとりごと / Awesome City Club',d:'穏やかで心地よい日本語詞'},{n:'夕暮れに手をつなぐ / ミツメ',d:'のんびり聴けるインディー'},{n:'Motion / Four Tet',d:'静かに流れるエレクトロニカ'},{n:'境界線 / Aimer',d:'やさしく包まれる感覚'}],
+    },
+    movie: {
+      '普通':         [{n:'ショーシャンクの空に（1994）',d:'見終わると前向きになれる'},{n:'千と千尋の神隠し（2001）',d:'何度見ても飽きない名作'},{n:'君の名は。（2016）',d:'日本アニメの最高傑作の一つ'},{n:'タイタニック（1997）',d:'何度見ても泣ける名作'},{n:'ラ・ラ・ランド（2016）',d:'夢と現実の美しい物語'},{n:'インターステラー（2014）',d:'壮大なスケールに圧倒される'},{n:'パラサイト（2019）',d:'衝撃のラストに震える'},{n:'天気の子（2019）',d:'映像美に息を飲む'},{n:'グレイテスト・ショーマン（2017）',d:'音楽が最高に熱い'},{n:'スパイダーマン（2002）',d:'王道ヒーローで純粋に楽しい'}],
+      '元気':         [{n:'トップガン マーヴェリック（2022）',d:'テンション爆上がりのアクション'},{n:'マトリックス（1999）',d:'かっこよさが極まる映像体験'},{n:'アベンジャーズ（2012）',d:'ヒーローが集結する興奮'},{n:'ワイルド・スピード（2001）',d:'スピード感で気分上昇'},{n:'ロッキー（1976）',d:'見終わると走り出したくなる'},{n:'ソックス・アンダーファイア（2019）',d:'痛快なアクションコメディ'},{n:'キングスマン（2014）',d:'スタイリッシュなスパイ映画'},{n:'バッドボーイズ（1995）',d:'笑えてかっこいい最高の一本'},{n:'オデッセイ（2015）',d:'絶望から立ち上がる爽快感'},{n:'グラディエーター（2000）',d:'燃えるような闘志が湧く'}],
+      '疲れ気味':     [{n:'かもめ食堂（2006）',d:'ゆったりとした空気に癒される'},{n:'ハウルの動く城（2004）',d:'映像美にただ身を委ねる'},{n:'幸せのちから（2006）',d:'じんわり心が温まる'},{n:'リトル・フォレスト（2014）',d:'自然と食べ物で癒される'},{n:'マダム・フローレンス（2016）',d:'笑えてほっこりする一本'},{n:'湯を沸かすほどの熱い愛（2016）',d:'泣いてすっきりできる'},{n:'ベイブ（1995）',d:'動物に癒される名作'},{n:'はじまりのうた（2014）',d:'音楽とともに心が温まる'},{n:'Little Miss Sunshine（2006）',d:'家族の絆でほっこり'},{n:'奇跡のリンゴ（2013）',d:'自然の中でゆっくり見たい'}],
+      'ストレス気味': [{n:'デッドプール（2016）',d:'笑いながらスカッとできる'},{n:'キック・アス（2010）',d:'痛快すぎる復讐劇'},{n:'ホーム・アローン（1990）',d:'笑い飛ばしてスッキリ'},{n:'プロポーズ大作戦（2009）',d:'笑えてスッキリするラブコメ'},{n:'イングロリアス・バスターズ（2009）',d:'爽快な復讐でスカッとする'},{n:'マレフィセント（2014）',d:'悪役視点で溜飲が下がる'},{n:'ズートピア（2016）',d:'見終わると元気が湧いてくる'},{n:'怒り（2016）',d:'感情を全部出して泣ける'},{n:'ジョン・ウィック（2014）',d:'圧倒的なアクションで発散'},{n:'プリティ・ウーマン（1990）',d:'ハッピーエンドで気分爽快'}],
+      'のんびりモード':[{n:'かもめ食堂（2006）',d:'北欧のゆったりした空気に浸れる'},{n:'ニュー・シネマ・パラダイス（1988）',d:'映画への愛がじんわり伝わる'},{n:'マイ・ネイバー・トトロ（1988）',d:'何も考えずに癒される'},{n:'ワンダフル・ライフ（1998）',d:'人生についてゆっくり考えさせる'},{n:'ビッグ・フィッシュ（2003）',d:'夢のような世界に浸れる'},{n:'Little Forest（2018）',d:'韓国版。四季の食事に心が和む'},{n:'シェフ 三ツ星フードトラック始めました（2014）',d:'食べ物の映像が心地よい'},{n:'グランド・ブダペスト・ホテル（2014）',d:'美しい映像をのんびり楽しむ'},{n:'プリンス・オブ・エジプト（1998）',d:'壮大だけど穏やかに見られる'},{n:'コーヒーをめぐる冒険（2012）',d:'白黒映像でのんびりした一日'}],
+    },
+    exercise: {
+      '普通':         [{n:'ウォーキング20分',d:'手軽に始められる'},{n:'ストレッチ',d:'体の疲れをほぐす'},{n:'筋トレ（自重）',d:'道具なしで全身運動'},{n:'ヨガ',d:'心身をリラックス'},{n:'縄跳び',d:'短時間で効果抜群'},{n:'ジョギング',d:'外の空気を吸いながら'},{n:'踏み台昇降',d:'室内でもOK'},{n:'腹筋・腕立て',d:'隙間時間に'},{n:'サイクリング',d:'景色を楽しみながら'},{n:'ラジオ体操',d:'全身くまなく動かせる'}],
+      '元気':         [{n:'5kmランニング',d:'限界まで走って達成感'},{n:'HIITトレーニング',d:'短時間で最大の効果'},{n:'筋トレ全力1時間',d:'限界まで追い込もう'},{n:'縄跳び連続100回',d:'テンポよく飛び続ける'},{n:'スプリント×10本',d:'全力疾走で気持ちいい'},{n:'バスケのシュート練習',d:'汗かいてスカッとしよう'},{n:'ボクシング（シャドー）',d:'全力でパンチして発散'},{n:'公園で懸垂',d:'上半身を鍛えて達成感'},{n:'ダンスエクササイズ',d:'音楽に合わせて全力で'},{n:'サッカーリフティング',d:'チャレンジして上達を感じる'}],
+      '疲れ気味':     [{n:'10分間ストレッチ',d:'疲れた体をゆっくりほぐす'},{n:'寝ながらヨガ',d:'布団の上でできる最高の運動'},{n:'ゆっくり散歩15分',d:'歩くだけでも体に効く'},{n:'肩回し・首回し',d:'30秒でできる凝り解消'},{n:'深呼吸しながらヨガ',d:'呼吸を意識してリラックス'},{n:'足のむくみとり体操',d:'座ったままできる'},{n:'軽い体操',d:'無理せず体を動かすだけ'},{n:'目のストレッチ',d:'疲れた目をほぐそう'},{n:'ゆっくりウォーキング10分',d:'外の空気だけでも変わる'},{n:'手のひら・指のストレッチ',d:'スマホ疲れに効く'}],
+      'ストレス気味': [{n:'全力スプリント',d:'走って怒りを燃やし尽くす'},{n:'サンドバッグを叩く（空振り）',d:'全力パンチで発散'},{n:'階段を全力で上る',d:'体を追い込んで頭を空に'},{n:'ランニング30分',d:'走ってモヤモヤを消化'},{n:'筋トレを限界まで',d:'疲れ果てたら何も考えられない'},{n:'縄跳び全力100回',d:'リズムで感情をリセット'},{n:'ダンス（好きな曲で）',d:'音楽と体で発散しよう'},{n:'ボクシング（シャドー）',d:'全力パンチで心がスッキリ'},{n:'バーピー20回',d:'きつすぎてストレスが吹き飛ぶ'},{n:'水泳',d:'水中で叫んでもいい'}],
+      'のんびりモード':[{n:'公園を散歩',d:'自然の中をのんびり歩こう'},{n:'ヨガ（リストラティブ）',d:'じっくりポーズをキープ'},{n:'サイクリング',d:'景色を楽しみながらゆっくりと'},{n:'太極拳',d:'ゆったりとした動きで整える'},{n:'海や川沿いを歩く',d:'水辺の空気で心が穏やかに'},{n:'ストレッチ20分',d:'じっくり体と向き合う時間'},{n:'朝の体操',d:'ゆっくり体を起こしていく'},{n:'竹林や公園でのんびり',d:'自然の中にいるだけで癒し'},{n:'プールでゆっくり泳ぐ',d:'浮力に身を委ねてリラックス'},{n:'ゆっくりバドミントン',d:'勝ち負けより楽しさを重視'}],
+    },
+    bored: {
+      '普通':         [{n:'読書',d:'知識と想像力が広がる'},{n:'散歩',d:'外の空気で気分転換'},{n:'料理・お菓子作り',d:'作る喜びを楽しもう'},{n:'ゲーム',d:'没頭できる時間'},{n:'日記を書く',d:'気持ちを整理しよう'},{n:'写真を撮りに行く',d:'日常の美しさを発見'},{n:'パズル',d:'集中力を高める'},{n:'映画鑑賞',d:'非日常にトリップ'},{n:'YouTube探索',d:'新しい興味を見つけよう'},{n:'楽器を弾く',d:'音楽で気持ちを表現'}],
+      '元気':         [{n:'知らない街を探索',d:'冒険気分で新発見'},{n:'初めての店に入る',d:'知らない世界が広がる'},{n:'自転車で遠出',d:'どこまでも行けそうな感覚'},{n:'スポーツ観戦',d:'応援で気分が上がる'},{n:'友達を誘って外出',d:'元気を周りにもシェア'},{n:'野外フェス・イベントへ',d:'人のエネルギーを感じよう'},{n:'楽器に挑戦',d:'新しいことに飛び込もう'},{n:'DIYに挑戦',d:'ものを作る喜びを体感'},{n:'写真展・美術館へ',d:'新しいインスピレーション'},{n:'料理に挑戦（難しい）',d:'元気な日だからこそ挑戦'}],
+      '疲れ気味':     [{n:'ぼーっとする',d:'何もしないことが最高の休憩'},{n:'好きな動画を見る',d:'頭を使わずリフレッシュ'},{n:'昔の写真を見返す',d:'懐かしさでほっこり'},{n:'好きな音楽を流す',d:'BGMになるだけでOK'},{n:'マンガを読む',d:'ページをめくるだけでいい'},{n:'ぬいぐるみと話す',d:'話すだけで気持ちが楽に'},{n:'好きなお菓子を食べる',d:'自分へのご褒美時間'},{n:'アロマを焚く',d:'香りで空間を変える'},{n:'ベッドでスマホをいじる',d:'罪悪感なく過ごしていい日'},{n:'好きな映画を2度見',d:'知っている話で安心して見られる'}],
+      'ストレス気味': [{n:'カラオケで熱唱',d:'思い切り歌って発散'},{n:'ゲームで戦う',d:'バトル系で感情を出し切る'},{n:'料理で思い切り切る',d:'包丁で食材を叩き切ろう'},{n:'お笑い動画を爆笑',d:'笑いは最高のストレス解消'},{n:'絵を描いて気持ちを表現',d:'言葉より先に手が動く'},{n:'大きな声で歌う（一人で）',d:'喉から感情を吐き出そう'},{n:'ジグソーパズル',d:'集中して余計なことを考えない'},{n:'お風呂でゆっくり考える',d:'湯船の中で感情を整理'},{n:'SNSをやめて一人で過ごす',d:'デジタルデトックスで心が落ち着く'},{n:'好きな本を読み返す',d:'知っている世界が安心を与える'}],
+      'のんびりモード':[{n:'本をじっくり読む',d:'時間を忘れて活字の世界へ'},{n:'手紙を書く',d:'誰かに気持ちをゆっくり伝える'},{n:'絵を描く',d:'完成を急がない創作時間'},{n:'料理をのんびり作る',d:'過程を楽しむ丁寧な時間'},{n:'庭や植物の世話',d:'土に触れて心が落ち着く'},{n:'昔のアルバムを見る',d:'懐かしい記憶をのんびりたどる'},{n:'手芸・刺繍',d:'指先に集中する穏やかな時間'},{n:'星を眺める',d:'宇宙の広さにのんびり圧倒される'},{n:'図書館でぶらぶら',d:'出会いを楽しむ本との縁'},{n:'将棋・チェス',d:'ゆっくり考える知的な時間'}],
+    },
   };
 
   let selectedMood    = '普通';
@@ -394,16 +503,13 @@
   let previousChoices = [];
   let currentTab      = 'today';
 
-  // 全履歴をlocalStorageから読み込み（日付フィルタなし）
   let allHistory = (() => {
     try { return JSON.parse(localStorage.getItem('kd_v6') || '[]'); }
     catch { return []; }
   })();
-
-  // 今日分だけ抽出（後方互換）
   let history = allHistory.filter(h => new Date(h.ts).toDateString() === new Date().toDateString());
 
-  // オンボーディング制御
+  // オンボーディング
   function startApp() {
     localStorage.setItem('kd_started', '1');
     document.getElementById('onboarding').classList.add('hidden');
@@ -412,7 +518,6 @@
     document.getElementById('onboarding').classList.add('hidden');
   }
 
-  // 履歴タブ切り替え
   function switchTab(el, tab) {
     document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
@@ -424,6 +529,24 @@
     document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
     selectedMood = el.dataset.mood;
+    // 気分変更時に全カテゴリを先読みし直す
+    Object.keys(catIcons).forEach(cat => {
+      const key = cat + '_' + selectedMood;
+      delete prefetchCache[key];
+      prefetchChoices(cat, selectedMood, []);
+    });
+  }
+
+  // ── 先読みキャッシュ ──
+  const prefetchCache = {};
+
+  // ルールベースで3択をピック（即時・フォールバック兼用）
+  function pickFromPool(cat, mood, exclude) {
+    const catPool = pool[cat];
+    const moodPool = (catPool && catPool[mood]) ? catPool[mood] : (catPool ? catPool['普通'] : []);
+    const available = moodPool.filter(c => !exclude.includes(c.n));
+    const source = available.length >= 3 ? available : moodPool;
+    return [...source].sort(() => Math.random() - 0.5).slice(0, 3).map(c => ({ name: c.n, desc: c.d }));
   }
 
   function openCat(btn, cat) {
@@ -433,10 +556,119 @@
     currentCat      = cat;
     previousChoices = [];
 
-    document.getElementById('loadIcon').textContent = catIcons[cat];
     document.getElementById('overlay').classList.add('show');
-    showLoading();
-    fetchChoices();
+
+    const cacheKey = cat + '_' + selectedMood;
+    if (prefetchCache[cacheKey]) {
+      // キャッシュ済みならAI結果を即表示
+      currentChoices  = prefetchCache[cacheKey];
+      previousChoices = [...currentChoices];
+      delete prefetchCache[cacheKey];
+      renderChoices();
+      // 次の3択を裏で先読み
+      prefetchChoices(cat, selectedMood, previousChoices.map(c => c.name));
+    } else {
+      // キャッシュなし → ルールベースで即座に表示しつつAIで上書き
+      currentChoices  = pickFromPool(cat, selectedMood, []);
+      previousChoices = [...currentChoices];
+      renderChoices();
+      // AIで取得できたら上書き
+      fetchAndUpdate(cat, selectedMood, []);
+    }
+  }
+
+  // AI取得して現在の選択肢を上書き（表示中なら）
+  async function fetchAndUpdate(cat, mood, exclude) {
+    try {
+      const choices = await fetchAIChoices(cat, mood, exclude);
+      if (currentCat === cat && document.getElementById('ovChoices').classList.contains('show')) {
+        currentChoices = choices;
+        previousChoices = [...previousChoices.filter(c => exclude.includes(c.name)), ...choices];
+        renderChoices();
+      }
+      // 次の3択を裏で先読み
+      prefetchChoices(cat, mood, choices.map(c => c.name));
+    } catch {}
+  }
+
+  // 裏でAI取得してキャッシュ
+  async function prefetchChoices(cat, mood, exclude) {
+    const cacheKey = cat + '_' + mood;
+    try {
+      const choices = await fetchAIChoices(cat, mood, exclude);
+      prefetchCache[cacheKey] = choices;
+    } catch {}
+  }
+
+  // AI APIに問い合わせて選択肢を返す
+  async function fetchAIChoices(cat, mood, exclude) {
+    const catNames_ = { dinner:'夕ごはん', break:'休憩', music:'今日の音楽', movie:'映画', exercise:'今日の運動', bored:'暇つぶし' };
+    const moodPrompts = {
+      music: {
+        '普通':          '今日聴くのにちょうどいい曲を3つ。J-POPや洋楽の人気曲を中心にジャンルを混ぜて。',
+        '元気':          'BPM速め・アップテンポ・ロック・EDMなどエネルギーが高い曲のみ3つ。バラード禁止。',
+        '疲れ気味':      'アコースティック・スローバラード・ピアノ系の癒し曲のみ3つ。激しい曲禁止。',
+        'ストレス気味':  'ロック・パンク・激しいラップなどスカッとできる曲のみ3つ。穏やかな曲禁止。',
+        'のんびりモード':'カフェ・ボサノバ・シティポップ・ジャズ系のみ3つ。激しい曲禁止。',
+      },
+      dinner: {
+        '普通':          '定番の夕ごはんメニューを3つ。具体的なメニュー名で。',
+        '元気':          '食べ応えある・少し挑戦的なメニューを3つ。ガッツリ系や珍しいものも。',
+        '疲れ気味':      '10〜20分で作れる・消化が良い・体に優しいメニューを3つ。',
+        'ストレス気味':  'スパイシー・がっつり系か逆に心が落ち着く癒し系メニューを3つ。',
+        'のんびりモード':'時間をかけてじっくり楽しめるメニューを3つ。鍋・煮込み料理など。',
+      },
+      break: {
+        '普通':          '5〜15分でできる休憩を3つ。定番からユニークなものまで。',
+        '元気':          'アクティブな気分転換を3つ。体を動かす・外に出るなど積極的なもの。',
+        '疲れ気味':      '横になれる・静かにできる・動かない休憩を3つ。',
+        'ストレス気味':  'スカッとできる・体で発散できる休憩を3つ。',
+        'のんびりモード':'ゆったりのんびり過ごせる休憩を3つ。急がない過ごし方。',
+      },
+      movie: {
+        '普通':          '今夜観るのにちょうどいい映画を3つ。「タイトル（公開年）」の形式で。',
+        '元気':          'テンションが上がる映画を3つ。「タイトル（公開年）」の形式で。アクション・ミュージカルなど。',
+        '疲れ気味':      '気軽に観られるハートウォーミングな映画を3つ。「タイトル（公開年）」の形式で。',
+        'ストレス気味':  '痛快で見終わったあとスッキリする映画を3つ。「タイトル（公開年）」の形式で。',
+        'のんびりモード':'じんわり感動するヒューマンドラマや美しい映像の映画を3つ。「タイトル（公開年）」の形式で。',
+      },
+      exercise: {
+        '普通':          '10〜30分でできる運動を3つ。',
+        '元気':          '強度高めの運動を3つ。汗をかける・追い込める内容で。',
+        '疲れ気味':      '体に負担が少ない軽い運動を3つ。ストレッチ・ゆったりヨガなど。',
+        'ストレス気味':  'ストレスを体で発散できる運動を3つ。思い切り動けるもの。',
+        'のんびりモード':'景色を楽しみながらゆっくりできる運動を3つ。',
+      },
+      bored: {
+        '普通':          '今すぐできる暇つぶしを3つ。定番からユニークなものまで。',
+        '元気':          'アクティブで新しい体験になる暇つぶしを3つ。外に出る・挑戦系。',
+        '疲れ気味':      '家でゆっくり楽しめる暇つぶしを3つ。動かない・静かにできるもの。',
+        'ストレス気味':  '没頭できる・笑える・発散できる暇つぶしを3つ。',
+        'のんびりモード':'じっくりゆっくり楽しめる暇つぶしを3つ。読書・手作りなど。',
+      },
+    };
+
+    const prompt_ = (moodPrompts[cat] && moodPrompts[cat][mood]) ? moodPrompts[cat][mood] : `${catNames_[cat]}を3つ提案して。`;
+    const excludeNote = exclude.length > 0 ? `\n除外(必ず全て別のものを): ${exclude.slice(-6).join('、')}` : '';
+    const seed = ['A','B','C','D','E','F'][Math.floor(Math.random()*6)];
+    const prompt = `[${seed}] 気分:${mood}\n${prompt_}${excludeNote}\nJSON only:{"choices":[{"name":"名前(12字以内)","desc":"一言(20字以内)"},{"name":"名前(12字以内)","desc":"一言(20字以内)"},{"name":"名前(12字以内)","desc":"一言(20字以内)"}]}`;
+
+    const res = await fetch("/api/chat", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ max_tokens: 200, messages: [{ role: "user", content: prompt }] })
+    });
+    const data = await res.json();
+    const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    return parsed.choices.map(c => ({ name: c.name, desc: c.desc }));
+  }
+
+  function pickChoices() {
+    const exclude = previousChoices.map(c => c.name);
+    currentChoices  = pickFromPool(currentCat, selectedMood, exclude);
+    previousChoices = [...previousChoices, ...currentChoices];
+    renderChoices();
+    // AI結果で上書き
+    fetchAndUpdate(currentCat, selectedMood, exclude);
   }
 
   function showLoading() {
@@ -446,129 +678,13 @@
     document.getElementById('ovRecipe').classList.remove('show');
   }
 
-  async function fetchChoices() {
-    const excludeNames = previousChoices.map(c => c.name);
-    const excludeNote = excludeNames.length > 0
-      ? `\n\n【重要】以下はすでに表示した選択肢です。これらと全く異なるものだけを提案してください。名前が1文字でも被ってはいけません：\n${excludeNames.map(n => '・' + n).join('\n')}`
-      : '';
-
-    const prompt = `あなたは日常の決断を助けるAIです。
-カテゴリ：${catNames[currentCat]}
-今日の気分：${selectedMood}
-${prompts[currentCat]}${excludeNote}
-
-JSONのみで返答（マークダウン・説明文不要）：
-{"choices":[
-  {"name":"提案名（12文字以内）","desc":"一言説明（22文字以内）"},
-  {"name":"提案名（12文字以内）","desc":"一言説明（22文字以内）"},
-  {"name":"提案名（12文字以内）","desc":"一言説明（22文字以内）"}
-]}`;
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          max_tokens: 400,
-          messages: [{ role: "user", content: prompt }]
-        })
-      });
-      const data = await res.json();
-      let parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
-
-      // フロント側でも重複チェック・除去
-      const filtered = parsed.choices.filter(c => !excludeNames.includes(c.name));
-      // もし全部重複していたらそのまま使う（最終手段）
-      const finalChoices = filtered.length >= 3 ? filtered.slice(0, 3) : parsed.choices;
-
-      previousChoices = [...previousChoices, ...finalChoices];
-      currentChoices  = finalChoices;
-    } catch {
-      // フォールバックもpreviousChoicesと重複しないよう絞る
-      const allFallbacks = {
-        dinner:   [
-          {name:'カレーライス',desc:'スパイスで元気チャージ'},
-          {name:'鍋料理',desc:'体も心も温まる'},
-          {name:'パスタ',desc:'手軽でボリューム満点'},
-          {name:'炒め物定食',desc:'野菜たっぷりヘルシー'},
-          {name:'丼もの',desc:'ガッツリ食べたい日に'},
-          {name:'うどん',desc:'やさしい味でほっこり'},
-          {name:'焼き魚定食',desc:'バランス◎の和食'},
-          {name:'ピザ',desc:'みんな大好き定番'},
-          {name:'餃子',desc:'手作りすると楽しい'},
-        ],
-        break:    [
-          {name:'深呼吸10回',desc:'すぐできるリセット'},
-          {name:'外の空気を吸う',desc:'気分転換の王道'},
-          {name:'お茶を飲む',desc:'ひと息ついてリフレッシュ'},
-          {name:'5分間ストレッチ',desc:'体をほぐしてリセット'},
-          {name:'好きな音楽を聴く',desc:'気分がすぐ変わる'},
-          {name:'日光を浴びる',desc:'自然のエネルギーをもらう'},
-          {name:'目を閉じて休む',desc:'疲れた目のリフレッシュ'},
-          {name:'軽い散歩',desc:'頭をスッキリさせよう'},
-          {name:'甘いものを食べる',desc:'小さなご褒美タイム'},
-        ],
-        music:    [
-          {name:'Dynamite / BTS',desc:'テンションが上がる定番'},
-          {name:'怪獣の花唄 / Vaundy',desc:'思わず口ずさむ一曲'},
-          {name:'Blinding Lights / The Weeknd',desc:'ドライブにも最高'},
-          {name:'香水 / 瑛人',desc:'しっとり聴きたい夜に'},
-          {name:'Shake It Off / Taylor Swift',desc:'元気が出る一曲'},
-          {name:'夜に駆ける / YOASOBI',desc:'疾走感がクセになる'},
-          {name:'Shape of You / Ed Sheeran',desc:'ノリノリになれる'},
-          {name:'うっせぇわ / Ado',desc:'ストレス発散に最高'},
-          {name:'Happier / Marshmello',desc:'明るい気分になれる'},
-        ],
-        movie:    [
-          {name:'ショーシャンクの空に（1994）',desc:'見終わった後に前向きになれる'},
-          {name:'千と千尋の神隠し（2001）',desc:'何度見ても飽きない名作'},
-          {name:'インターステラー（2014）',desc:'壮大なスケールに圧倒される'},
-          {name:'ラ・ラ・ランド（2016）',desc:'夢と現実の美しい物語'},
-          {name:'君の名は。（2016）',desc:'日本アニメの最高傑作の一つ'},
-          {name:'タイタニック（1997）',desc:'何度見ても泣ける名作'},
-          {name:'パラサイト（2019）',desc:'衝撃のラストに震える'},
-          {name:'天気の子（2019）',desc:'映像美に息を飲む'},
-          {name:'グレイテスト・ショーマン（2017）',desc:'音楽が最高に熱い'},
-        ],
-        exercise: [
-          {name:'ウォーキング20分',desc:'手軽に始められる'},
-          {name:'ストレッチ',desc:'体の疲れをほぐす'},
-          {name:'筋トレ（自重）',desc:'道具なしで全身運動'},
-          {name:'ヨガ',desc:'心身をリラックス'},
-          {name:'縄跳び',desc:'短時間で効果抜群'},
-          {name:'ジョギング',desc:'外の空気を吸いながら'},
-          {name:'踏み台昇降',desc:'室内でもOK'},
-          {name:'腹筋・腕立て',desc:'隙間時間に'},
-          {name:'サイクリング',desc:'景色を楽しみながら'},
-        ],
-        bored:    [
-          {name:'読書',desc:'知識と想像力が広がる'},
-          {name:'落書き・お絵描き',desc:'なんでも気軽に'},
-          {name:'散歩',desc:'外の空気で気分転換'},
-          {name:'パズル',desc:'集中力を高める'},
-          {name:'料理・お菓子作り',desc:'作る喜びを楽しもう'},
-          {name:'映画鑑賞',desc:'非日常にトリップ'},
-          {name:'ゲーム',desc:'没頭できる時間'},
-          {name:'日記を書く',desc:'気持ちを整理しよう'},
-          {name:'写真を撮りに行く',desc:'日常の美しさを発見'},
-        ],
-      };
-
-      const pool = allFallbacks[currentCat] || allFallbacks.bored;
-      const excludeNames2 = previousChoices.map(c => c.name);
-      const available = pool.filter(c => !excludeNames2.includes(c.name));
-      // 利用可能なものからランダムに3つ選ぶ
-      const shuffled = available.sort(() => Math.random() - 0.5).slice(0, 3);
-      currentChoices = shuffled.length >= 3 ? shuffled : pool.slice(0, 3);
-      previousChoices = [...previousChoices, ...currentChoices];
-    }
-
-    renderChoices();
-  }
-
   function renderChoices() {
+    const catPool = pool[currentCat];
+    const moodPool = catPool ? catPool[selectedMood] || catPool['普通'] : [];
+    document.getElementById('ovLoading').classList.add('hidden');
     document.getElementById('ovCatLabel').textContent = catNames[currentCat];
-    document.getElementById('ovQuestion').textContent = questions[currentCat];
+    const qMap = { dinner:'今夜のごはん、どれにする？', break:'休憩の過ごし方、どれにする？', music:'今日聴く音楽、どれにする？', movie:'今夜の映画、どれにする？', exercise:'今日の運動、どれにする？', bored:'暇つぶし、どれにする？' };
+    document.getElementById('ovQuestion').textContent = qMap[currentCat];
     document.getElementById('choicesList').innerHTML = currentChoices.map((c, i) => `
       <div class="choice-card" onclick="selectChoice(${i})">
         <div class="choice-num">${i + 1}</div>
@@ -579,121 +695,91 @@ JSONのみで返答（マークダウン・説明文不要）：
         <div class="choice-arrow">›</div>
       </div>
     `).join('');
-
-    document.getElementById('ovLoading').classList.add('hidden');
     document.getElementById('ovChoices').classList.add('show');
   }
 
   async function selectChoice(idx) {
     const choice = currentChoices[idx];
-    showLoading();
-    document.getElementById('loadIcon').textContent = catIcons[currentCat];
 
     if (currentCat === 'dinner') {
+      showLoading();
+      document.getElementById('loadIcon').textContent = '🍽️';
       await fetchRecipe(choice.name);
       return;
     }
     if (currentCat === 'movie') {
+      showLoading();
+      document.getElementById('loadIcon').textContent = '🎬';
       await showMovieResult(choice);
       return;
     }
 
-    const prompt = `「${choice.name}」を選んだ人への一言を書いてください。
-今日の気分：${selectedMood}
-温かく背中を押す一文で。40文字以内。`;
+    // AIで一言だけ取得（非同期・軽量）
+    showResultInstant(choice);
+    fetchReason(choice); // 裏でAIに一言を取得して後から更新
+  }
 
-    let reason = choice.desc + '。今日もいい選択です！';
+  function showResultInstant(choice) {
+    document.getElementById('ovChoices').classList.remove('show');
+    document.getElementById('resIcon').textContent = catIcons[currentCat];
+    document.getElementById('resAnswer').textContent = choice.name;
+    document.getElementById('resReason').textContent = choice.desc;
+    document.getElementById('ovResult').classList.add('show');
+  }
+
+  async function fetchReason(choice) {
     try {
       const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          max_tokens: 100,
-          messages: [{ role: "user", content: prompt }]
+          max_tokens: 80,
+          messages: [{ role: "user", content: `「${choice.name}」を選んだ。気分：${selectedMood}。背中を押す一言を35文字以内で。` }]
         })
       });
       const data = await res.json();
-      reason = data.content[0].text.trim().replace(/^「|」$/g, '');
+      const reason = data.content[0].text.trim().replace(/^「|」$/g, '');
+      // まだ結果画面が表示中なら更新
+      if (document.getElementById('ovResult').classList.contains('show')) {
+        document.getElementById('resReason').textContent = reason;
+      }
     } catch {}
-
-    document.getElementById('resIcon').textContent = catIcons[currentCat];
-    document.getElementById('resAnswer').textContent = choice.name;
-    document.getElementById('resReason').textContent = reason;
-    document.getElementById('ovLoading').classList.add('hidden');
-    document.getElementById('ovResult').classList.add('show');
   }
 
   async function showMovieResult(choice) {
-    // タイトルから年号を除いた検索用タイトルを作成
     const searchTitle = choice.name.replace(/（\d{4}）$/, '').trim();
     const jwUrl = 'https://www.justwatch.com/jp/search?q=' + encodeURIComponent(searchTitle);
-
-    let reason = choice.desc + '。今夜はこれで決まり！';
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          max_tokens: 100,
-          messages: [{ role: "user", content: `映画「${choice.name}」の魅力を一文で。今日の気分：${selectedMood}。40文字以内。` }]
-        })
-      });
-      const data = await res.json();
-      reason = data.content[0].text.trim().replace(/^「|」$/g, '');
-    } catch {}
-
     document.getElementById('resIcon').textContent = '🎬';
     document.getElementById('resAnswer').textContent = choice.name;
     document.getElementById('resReason').innerHTML =
-      reason + '<br><br><a href="' + jwUrl + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#f0f0ee;border:1px solid #e8e8e4;border-radius:100px;padding:8px 16px;font-size:12px;color:#1a1a1a;text-decoration:none;font-weight:600;margin-top:4px;">🔍 どのサブスクで観られる？</a>';
+      choice.desc + '<br><br><a href="' + jwUrl + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#f0f0ee;border:1px solid #e8e8e4;border-radius:100px;padding:8px 16px;font-size:12px;color:#1a1a1a;text-decoration:none;font-weight:600;margin-top:4px;">🔍 どのサブスクで観られる？</a>';
     document.getElementById('ovLoading').classList.add('hidden');
     document.getElementById('ovResult').classList.add('show');
+    // 裏でAI一言を取得
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ max_tokens: 80, messages: [{ role: "user", content: `映画「${choice.name}」の魅力を一文で。気分：${selectedMood}。35文字以内。` }] })
+      });
+      const data = await res.json();
+      const reason = data.content[0].text.trim().replace(/^「|」$/g, '');
+      if (document.getElementById('ovResult').classList.contains('show')) {
+        document.getElementById('resReason').innerHTML =
+          reason + '<br><br><a href="' + jwUrl + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#f0f0ee;border:1px solid #e8e8e4;border-radius:100px;padding:8px 16px;font-size:12px;color:#1a1a1a;text-decoration:none;font-weight:600;margin-top:4px;">🔍 どのサブスクで観られる？</a>';
+      }
+    } catch {}
   }
 
   async function fetchRecipe(dishName) {
-    const prompt = `「${dishName}」のレシピをJSONで返してください。
-2人前、家庭で作りやすいシンプルなレシピで。
-
-JSONのみ返答（マークダウン不要）：
-{
-  "name": "料理名",
-  "desc": "一言説明（20文字以内）",
-  "time": "調理時間（例：20分）",
-  "difficulty": "難易度（例：簡単）",
-  "servings": "2人前",
-  "ingredients": [
-    {"name": "材料名", "amount": "分量"},
-    ...
-  ],
-  "steps": [
-    "手順1",
-    "手順2",
-    ...
-  ]
-}`;
-
+    const prompt = `「${dishName}」のレシピをJSONで。2人前。JSONのみ：{"name":"料理名","desc":"一言(20字)","time":"調理時間","difficulty":"難易度","servings":"2人前","ingredients":[{"name":"材料","amount":"量"}],"steps":["手順1","手順2"]}`;
     try {
       const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          max_tokens: 800,
-          messages: [{ role: "user", content: prompt }]
-        })
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ max_tokens: 600, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
-      const recipe = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
-      renderRecipe(recipe);
+      renderRecipe(JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim()));
     } catch {
-      renderRecipe({
-        name: dishName,
-        desc: '家庭の定番メニュー',
-        time: '30分',
-        difficulty: '普通',
-        servings: '2人前',
-        ingredients: [{name:'各種材料',amount:'適量'}],
-        steps: ['材料を準備する','調理する','盛り付けて完成！']
-      });
+      renderRecipe({ name:dishName, desc:'家庭の定番メニュー', time:'30分', difficulty:'普通', servings:'2人前', ingredients:[{name:'各種材料',amount:'適量'}], steps:['材料を準備する','調理する','完成！'] });
     }
   }
 
@@ -703,39 +789,16 @@ JSONのみ返答（マークダウン不要）：
     document.getElementById('recipeMeta').innerHTML = `
       <div class="recipe-meta-item"><span class="meta-val">${recipe.time}</span><span class="meta-label">調理時間</span></div>
       <div class="recipe-meta-item"><span class="meta-val">${recipe.difficulty}</span><span class="meta-label">難易度</span></div>
-      <div class="recipe-meta-item"><span class="meta-val">${recipe.servings}</span><span class="meta-label">分量</span></div>
-    `;
-    document.getElementById('ingredientList').innerHTML = recipe.ingredients.map(i => `
-      <div class="ingredient-row">
-        <span class="ingredient-name">${i.name}</span>
-        <span class="ingredient-amount">${i.amount}</span>
-      </div>
-    `).join('');
-    document.getElementById('stepList').innerHTML = recipe.steps.map((s, i) => `
-      <div class="step-item">
-        <div class="step-num">${i + 1}</div>
-        <div class="step-text">${s}</div>
-      </div>
-    `).join('');
-
+      <div class="recipe-meta-item"><span class="meta-val">${recipe.servings}</span><span class="meta-label">分量</span></div>`;
+    document.getElementById('ingredientList').innerHTML = recipe.ingredients.map(i =>
+      `<div class="ingredient-row"><span class="ingredient-name">${i.name}</span><span class="ingredient-amount">${i.amount}</span></div>`).join('');
+    document.getElementById('stepList').innerHTML = recipe.steps.map((s, i) =>
+      `<div class="step-item"><div class="step-num">${i+1}</div><div class="step-text">${s}</div></div>`).join('');
     document.getElementById('ovLoading').classList.add('hidden');
     document.getElementById('ovRecipe').classList.add('show');
   }
 
-  function acceptRecipe() {
-    const name = document.getElementById('recipeName').textContent;
-    const item = {
-      answer: name, cat: 'dinner',
-      ts: new Date().toISOString(),
-      time: new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' }),
-      date: new Date().toLocaleDateString('ja-JP', { month:'numeric', day:'numeric' })
-    };
-    history.unshift(item);
-    allHistory.unshift(item);
-    localStorage.setItem('kd_v6', JSON.stringify(allHistory));
-    renderHistory();
-    closeOverlay();
-  }
+  function refreshChoices() { pickChoices(); }
 
   function backToChoices() {
     document.getElementById('ovResult').classList.remove('show');
@@ -743,97 +806,156 @@ JSONのみ返答（マークダウン不要）：
     document.getElementById('ovChoices').classList.add('show');
   }
 
-  async function refreshChoices() {
-    showLoading();
-    await fetchChoices();
-  }
-
-  function accept() {
-    const answer = document.getElementById('resAnswer').textContent;
-    const item = {
-      answer, cat: currentCat,
-      ts: new Date().toISOString(),
-      time: new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' }),
-      date: new Date().toLocaleDateString('ja-JP', { month:'numeric', day:'numeric' })
-    };
+  function saveItem(item) {
     history.unshift(item);
     allHistory.unshift(item);
     localStorage.setItem('kd_v6', JSON.stringify(allHistory));
     renderHistory();
+    renderStreak();
+  }
+
+  function accept() {
+    saveItem({ answer: document.getElementById('resAnswer').textContent, cat: currentCat,
+      ts: new Date().toISOString(), time: new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),
+      date: new Date().toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}) });
+    closeOverlay();
+  }
+
+  function acceptRecipe() {
+    saveItem({ answer: document.getElementById('recipeName').textContent, cat: 'dinner',
+      ts: new Date().toISOString(), time: new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),
+      date: new Date().toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}) });
     closeOverlay();
   }
 
   function closeOverlay() {
     document.getElementById('overlay').classList.remove('show');
+    // 中身を全リセット（次回開いたときに前の内容が残らないように）
     setTimeout(() => {
-      showLoading();
+      document.getElementById('ovLoading').classList.remove('hidden');
+      document.getElementById('ovChoices').classList.remove('show');
+      document.getElementById('ovResult').classList.remove('show');
+      document.getElementById('ovRecipe').classList.remove('show');
       document.getElementById('ovLoading').classList.add('hidden');
+      document.getElementById('choicesList').innerHTML = '';
+      document.getElementById('resAnswer').textContent = '';
+      document.getElementById('resReason').textContent = '';
     }, 400);
   }
 
   function renderHistory() {
     const c = document.getElementById('historyContainer');
     const today = new Date().toDateString();
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-    let items;
+    const weekAgo = new Date(Date.now() - 7*24*60*60*1000);
+    let items = currentTab === 'today' ? allHistory.filter(h => new Date(h.ts).toDateString() === today)
+      : currentTab === 'week' ? allHistory.filter(h => new Date(h.ts) >= weekAgo) : allHistory;
+    if (!items.length) { c.innerHTML = '<div class="history-empty">記録はまだありません</div>'; return; }
     if (currentTab === 'today') {
-      items = allHistory.filter(h => new Date(h.ts).toDateString() === today);
-    } else if (currentTab === 'week') {
-      items = allHistory.filter(h => new Date(h.ts) >= weekAgo);
+      c.innerHTML = `<div class="history-card">${items.map(h => `
+        <div class="history-item"><div class="h-icon">${catIcons[h.cat]||'🎯'}</div>
+        <div class="h-info"><div class="h-ans">${h.answer}</div><div class="h-meta">${catNames[h.cat]||''} · ${h.time}</div></div>
+        <div class="h-check">✓</div></div>`).join('')}</div>`;
     } else {
-      items = allHistory;
-    }
-
-    if (!items.length) {
-      c.innerHTML = '<div class="history-empty">記録はまだありません</div>';
-      return;
-    }
-
-    if (currentTab === 'today') {
-      // 今日はシンプルリスト
-      c.innerHTML = `<div class="history-card">${
-        items.map(h => `
-          <div class="history-item">
-            <div class="h-icon">${catIcons[h.cat] || '🎯'}</div>
-            <div class="h-info">
-              <div class="h-ans">${h.answer}</div>
-              <div class="h-meta">${catNames[h.cat] || ''} · ${h.time}</div>
-            </div>
-            <div class="h-check">✓</div>
-          </div>
-        `).join('')
-      }</div>`;
-    } else {
-      // 過去は日付グループ化
       const groups = {};
       items.forEach(h => {
-        const d = new Date(h.ts);
-        const isToday = d.toDateString() === today;
-        const label = isToday ? '今日' : d.toLocaleDateString('ja-JP', { month:'numeric', day:'numeric', weekday:'short' });
+        const d = new Date(h.ts), isToday = d.toDateString() === today;
+        const label = isToday ? '今日' : d.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric',weekday:'short'});
         if (!groups[label]) groups[label] = [];
         groups[label].push(h);
       });
-
       c.innerHTML = Object.entries(groups).map(([label, hs]) => `
-        <div class="history-date-group">
-          <div class="history-date-label">${label}</div>
-          <div class="history-card">${hs.map(h => `
-            <div class="history-item">
-              <div class="h-icon">${catIcons[h.cat] || '🎯'}</div>
-              <div class="h-info">
-                <div class="h-ans">${h.answer}</div>
-                <div class="h-meta">${catNames[h.cat] || ''} · ${h.time}</div>
-              </div>
-              <div class="h-check">✓</div>
-            </div>
-          `).join('')}</div>
-        </div>
-      `).join('');
+        <div class="history-date-group"><div class="history-date-label">${label}</div>
+        <div class="history-card">${hs.map(h => `
+          <div class="history-item"><div class="h-icon">${catIcons[h.cat]||'🎯'}</div>
+          <div class="h-info"><div class="h-ans">${h.answer}</div><div class="h-meta">${catNames[h.cat]||''} · ${h.time}</div></div>
+          <div class="h-check">✓</div></div>`).join('')}</div></div>`).join('');
     }
   }
 
+  function calcStreak() {
+    const dates = [...new Set(allHistory.map(h => new Date(h.ts).toDateString()))];
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      if (dates.includes(d.toDateString())) streak++; else break;
+    }
+    return streak;
+  }
+
+  function renderStreak() {
+    const streak = calcStreak();
+    document.getElementById('streakCount').textContent = streak + '日';
+    const today = new Date();
+    const dots = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const done = allHistory.some(h => new Date(h.ts).toDateString() === d.toDateString());
+      dots.push(`<div class="streak-dot${done?' done':''}"></div>`);
+    }
+    document.getElementById('streakDots').innerHTML = dots.join('');
+    document.querySelector('.streak-fire').textContent = streak > 0 ? '🔥' : '💧';
+  }
+
+  function shareResult() {
+    const answer = document.getElementById('resAnswer').textContent;
+    const text = '今日の' + (catNames[currentCat]||'決断') + 'はAIに決めてもらった！\n「' + answer + '」\n\n#今日の決断 #AIに任せた';
+    showShareModal(text);
+  }
+
+  function showShareModal(text) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999;padding:24px;';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:320px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">📤 シェア</div>
+        <textarea id="shareText" readonly style="width:100%;height:90px;border:1.5px solid #e8e8e4;border-radius:10px;padding:10px;font-size:13px;resize:none;font-family:inherit;line-height:1.7;">${text}</textarea>
+        <button id="copyBtn" onclick="
+          var ta = document.getElementById('shareText');
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(ta.value)
+              .then(function(){ var b=document.getElementById('copyBtn'); b.textContent='✓ コピーしました！'; b.style.background='#4CAF50'; })
+              .catch(function(){ ta.select(); document.execCommand('copy'); var b=document.getElementById('copyBtn'); b.textContent='✓ コピーしました！'; b.style.background='#4CAF50'; });
+          } else {
+            ta.select(); document.execCommand('copy'); var b=document.getElementById('copyBtn'); b.textContent='✓ コピーしました！'; b.style.background='#4CAF50';
+          }
+        " style="margin-top:10px;width:100%;background:#1a1a1a;color:#fff;border:none;border-radius:100px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;">📋 コピーする</button>
+        <button onclick="this.closest('div').parentElement.remove()" style="margin-top:8px;width:100%;background:transparent;color:#9a9a9a;border:1.5px solid #e8e8e4;border-radius:100px;padding:11px;font-size:13px;cursor:pointer;">閉じる</button>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  }
+
+  function showReport() {
+    const weekAgo = new Date(Date.now() - 7*24*60*60*1000);
+    const weekItems = allHistory.filter(h => new Date(h.ts) >= weekAgo);
+    const now = new Date();
+    document.getElementById('reportSub').textContent = `${weekAgo.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'})} 〜 ${now.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'})}`;
+    document.getElementById('reportTotal').textContent = weekItems.length;
+    const catCount = {};
+    weekItems.forEach(h => { catCount[h.cat] = (catCount[h.cat]||0)+1; });
+    const maxCat = Math.max(...Object.values(catCount), 1);
+    document.getElementById('reportCats').innerHTML = Object.entries(catCount).sort((a,b)=>b[1]-a[1])
+      .map(([cat,cnt]) => `<div class="report-bar-row"><div class="report-bar-label"><span>${catIcons[cat]||'🎯'} ${catNames[cat]||cat}</span><span>${cnt}回</span></div><div class="report-bar-track"><div class="report-bar-fill" style="width:${Math.round(cnt/maxCat*100)}%"></div></div></div>`).join('') || '<div style="color:var(--sub);font-size:13px;padding:8px 0">まだ記録がありません</div>';
+    const ansCount = {};
+    weekItems.forEach(h => { ansCount[h.answer]=(ansCount[h.answer]||0)+1; });
+    const topItems = Object.entries(ansCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    document.getElementById('reportTop').innerHTML = topItems.length
+      ? topItems.map(([ans,cnt]) => `<div class="report-stat"><span class="report-stat-label">${ans}</span><span class="report-stat-val">${cnt}回</span></div>`).join('')
+      : '<div style="color:var(--sub);font-size:13px;padding:8px 0">まだ記録がありません</div>';
+    document.getElementById('reportOverlay').classList.add('show');
+  }
+
+  function hideReport() { document.getElementById('reportOverlay').classList.remove('show'); }
+
   renderHistory();
+  renderStreak();
+
+  // ページ読み込み時に全カテゴリを先読み開始
+  setTimeout(() => {
+    Object.keys(catIcons).forEach(cat => prefetchChoices(cat, selectedMood, []));
+  }, 300);
+
 </script>
 </body>
 </html>
